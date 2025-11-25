@@ -1,9 +1,103 @@
+// "use client"
+
+// import Link from "next/link"
+// import { format } from "date-fns"
+// import { es } from "date-fns/locale/es"
+// import { Download, ExternalLink } from "lucide-react"
+// import { Card, CardContent } from "@/components/ui/card"
+// import { Button } from "@/components/ui/button"
+// import { Badge } from "@/components/ui/badge"
+// import { getVersionStatus, formatFileSize } from "@/lib/utils"
+// import type { Version } from "@/types/version"
+
+// interface VersionCardProps {
+//   version: Version
+// }
+
+// export const VersionCard = ({ version }: VersionCardProps) => {
+//   const status = getVersionStatus(version.expiresAt ? new Date(version.expiresAt) : null)
+//   const releaseDate = new Date(version.releaseDate)
+
+//   const getStatusVariant = () => {
+//     if (status.status === "expired") return "expired"
+//     if (status.status === "expiring") return "warning"
+//     return "success"
+//   }
+
+//   const handleDownload = (e: React.MouseEvent) => {
+//     e.preventDefault()
+//     window.open(version.diawiUrl, "_blank")
+//   }
+
+//   return (
+//     <Card>
+//       <CardContent className="p-6">
+//         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+//           <div className="flex-1 space-y-2">
+//             <div className="flex items-center gap-3">
+//               <h3 className="text-lg font-semibold">{version.appName}</h3>
+//               <Badge variant={getStatusVariant()}>{status.message}</Badge>
+//               {version.releaseType && (
+//                 <Badge variant="outline">{version.releaseType}</Badge>
+//               )}
+//             </div>
+//             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+//               <div>
+//                 <p className="text-muted-foreground">Versión</p>
+//                 <p className="font-medium">{version.version}</p>
+//               </div>
+//               <div>
+//                 <p className="text-muted-foreground">Build</p>
+//                 <p className="font-medium">#{version.build}</p>
+//               </div>
+//               <div>
+//                 <p className="text-muted-foreground">Fecha</p>
+//                 <p className="font-medium">
+//                   {format(releaseDate, "d 'de' MMMM 'de' yyyy, h:mm a", { locale: es })}
+//                 </p>
+//               </div>
+//               <div>
+//                 <p className="text-muted-foreground">Tamaño</p>
+//                 <p className="font-medium">{formatFileSize(version.fileSize)}</p>
+//               </div>
+//             </div>
+//             {version.changelog && (
+//               <div>
+//                 <p className="text-sm text-muted-foreground line-clamp-2">
+//                   {version.changelog}
+//                 </p>
+//               </div>
+//             )}
+//           </div>
+//           <div className="flex flex-col gap-2 md:min-w-[200px]">
+//             <Button
+//               onClick={handleDownload}
+//               className="w-full"
+//               disabled={status.status === "expired"}
+//             >
+//               <Download className="mr-2 h-4 w-4" />
+//               Descargar
+//             </Button>
+//             <Link href={`/version/${version.id}`}>
+//               <Button variant="outline" className="w-full">
+//                 <ExternalLink className="mr-2 h-4 w-4" />
+//                 Ver detalles
+//               </Button>
+//             </Link>
+//           </div>
+//         </div>
+//       </CardContent>
+//     </Card>
+//   )
+// }
+
 "use client"
 
+import { useState } from "react"
 import Link from "next/link"
 import { format } from "date-fns"
 import { es } from "date-fns/locale/es"
-import { Download, ExternalLink } from "lucide-react"
+import { Download, ExternalLink, Loader2 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -15,6 +109,7 @@ interface VersionCardProps {
 }
 
 export const VersionCard = ({ version }: VersionCardProps) => {
+  const [downloading, setDownloading] = useState(false)
   const status = getVersionStatus(version.expiresAt ? new Date(version.expiresAt) : null)
   const releaseDate = new Date(version.releaseDate)
 
@@ -24,9 +119,52 @@ export const VersionCard = ({ version }: VersionCardProps) => {
     return "success"
   }
 
-  const handleDownload = (e: React.MouseEvent) => {
+  const handleDownload = async (e: React.MouseEvent) => {
     e.preventDefault()
-    window.open(version.diawiUrl, "_blank")
+    
+    // Si está expirado, no hacer nada
+    if (status.status === "expired") return
+
+    try {
+      setDownloading(true)
+
+      // Intenta descarga directa con fetch
+      const response = await fetch(version.diawiUrl, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/vnd.android.package-archive'
+        }
+      })
+
+      // Si es exitoso, descarga como blob
+      if (response.ok) {
+        const blob = await response.blob()
+        const url = window.URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = url
+        link.download = `${version.appName}-v${version.version}-build${version.build}.apk`
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        window.URL.revokeObjectURL(url)
+      } else {
+        // Si falla, usar método alternativo
+        throw new Error('Direct download failed')
+      }
+    } catch (error) {
+      // Fallback: crear enlace de descarga simple
+      console.log('Usando método de descarga alternativo')
+      const link = document.createElement('a')
+      link.href = version.diawiUrl
+      link.download = `${version.appName}-v${version.version}-build${version.build}.apk`
+      link.target = '_blank'
+      link.rel = 'noopener noreferrer'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+    } finally {
+      setDownloading(false)
+    }
   }
 
   return (
@@ -73,10 +211,19 @@ export const VersionCard = ({ version }: VersionCardProps) => {
             <Button
               onClick={handleDownload}
               className="w-full"
-              disabled={status.status === "expired"}
+              disabled={status.status === "expired" || downloading}
             >
-              <Download className="mr-2 h-4 w-4" />
-              Descargar
+              {downloading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Descargando...
+                </>
+              ) : (
+                <>
+                  <Download className="mr-2 h-4 w-4" />
+                  Descargar
+                </>
+              )}
             </Button>
             <Link href={`/version/${version.id}`}>
               <Button variant="outline" className="w-full">
@@ -90,4 +237,3 @@ export const VersionCard = ({ version }: VersionCardProps) => {
     </Card>
   )
 }
-

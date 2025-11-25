@@ -101,7 +101,7 @@ import { Download, ExternalLink, Loader2 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { getVersionStatus, formatFileSize } from "@/lib/utils"
+import { getVersionStatus, formatFileSize, getDiawiDownloadUrl } from "@/lib/utils"
 import type { Version } from "@/types/version"
 
 interface VersionCardProps {
@@ -128,42 +128,22 @@ export const VersionCard = ({ version }: VersionCardProps) => {
     try {
       setDownloading(true)
 
-      // Intenta descarga directa con fetch
-      const response = await fetch(version.diawiUrl, {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/vnd.android.package-archive'
-        }
-      })
-
-      // Si es exitoso, descarga como blob
-      if (response.ok) {
-        const blob = await response.blob()
-        const url = window.URL.createObjectURL(blob)
-        const link = document.createElement('a')
-        link.href = url
-        link.download = `${version.appName}-v${version.version}-build${version.build}.apk`
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
-        window.URL.revokeObjectURL(url)
-      } else {
-        // Si falla, usar método alternativo
-        throw new Error('Direct download failed')
-      }
+      // Convertir a URL de descarga directa (i.diawi.com/CODE)
+      const downloadUrl = getDiawiDownloadUrl(version.diawiUrl)
+      
+      // Usar window.location.href para forzar la descarga directa
+      // Esto evita que el navegador redirija a la página web
+      window.location.href = downloadUrl
+      
+      // Dar tiempo para que inicie la descarga antes de resetear el estado
+      setTimeout(() => {
+        setDownloading(false)
+      }, 1000)
     } catch (error) {
-      // Fallback: crear enlace de descarga simple
-      console.log('Usando método de descarga alternativo')
-      const link = document.createElement('a')
-      link.href = version.diawiUrl
-      link.download = `${version.appName}-v${version.version}-build${version.build}.apk`
-      link.target = '_blank'
-      link.rel = 'noopener noreferrer'
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-    } finally {
+      console.error('Error al descargar:', error)
       setDownloading(false)
+      // Fallback: abrir directamente la URL de descarga
+      window.location.href = getDiawiDownloadUrl(version.diawiUrl)
     }
   }
 

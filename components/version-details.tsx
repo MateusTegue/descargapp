@@ -7,7 +7,7 @@ import { QRCodeSVG } from "qrcode.react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { getVersionStatus, formatFileSize } from "@/lib/utils"
+import { getVersionStatus, formatFileSize, getDiawiDownloadUrl } from "@/lib/utils"
 import Link from "next/link"
 import { useState } from "react"
 import type { Version } from "@/types/version"
@@ -22,12 +22,19 @@ export const VersionDetails = ({ version }: VersionDetailsProps) => {
   const releaseDate = new Date(version.releaseDate)
 
   const handleDownload = () => {
-    window.open(version.diawiUrl, "_blank")
+    // Usar la URL de descarga directa (i.diawi.com/CODE)
+    const downloadUrl = getDiawiDownloadUrl(version.diawiUrl)
+    
+    // Usar window.location.href para forzar la descarga directa
+    // Esto evita que el navegador redirija a la página web
+    window.location.href = downloadUrl
   }
 
   const handleCopyLink = async () => {
     try {
-      await navigator.clipboard.writeText(version.diawiUrl)
+      // Copiar la URL de descarga directa
+      const downloadUrl = getDiawiDownloadUrl(version.diawiUrl)
+      await navigator.clipboard.writeText(downloadUrl)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     } catch (error) {
@@ -108,7 +115,7 @@ export const VersionDetails = ({ version }: VersionDetailsProps) => {
             <div className="space-y-4">
               <h3 className="font-semibold">Código QR para instalación</h3>
               <div className="flex justify-center p-4 bg-white dark:bg-gray-800 rounded-lg">
-                <QRCodeSVG value={version.diawiUrl} size={200} />
+                <QRCodeSVG value={getDiawiDownloadUrl(version.diawiUrl)} size={200} />
               </div>
               <p className="text-sm text-muted-foreground text-center">
                 Escanea este código con tu dispositivo Android para instalar
@@ -145,7 +152,7 @@ export const VersionDetails = ({ version }: VersionDetailsProps) => {
               </div>
               <div className="p-4 bg-muted rounded-md">
                 <p className="text-xs text-muted-foreground break-all">
-                  {version.diawiUrl}
+                  {getDiawiDownloadUrl(version.diawiUrl)}
                 </p>
               </div>
             </div>

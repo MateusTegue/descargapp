@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 
+// Forzar que esta ruta sea completamente dinámica
 export const dynamic = "force-dynamic"
+export const runtime = "nodejs"
 
 export async function GET() {
   try {

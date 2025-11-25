@@ -48,6 +48,22 @@ export async function GET(
     // Buscar el patrón: href="https://a3.files.diawi.com/app-file/XXXXX.apk"
     const apkUrlMatch = html.match(/href="(https:\/\/[^"]+\.files\.diawi\.com\/app-file\/[^"]+\.apk)"/)
     
+    // Extraer el tamaño del APK del HTML
+    // Buscar el patrón: <div class="item-title">Size</div><div class="item-after">57.26 MB</div>
+    const sizeMatch = html.match(/<div class="item-title">Size<\/div>\s*<div class="item-after">([^<]+)<\/div>/)
+    let fileSize: number | null = null
+    
+    if (sizeMatch && sizeMatch[1]) {
+      const sizeText = sizeMatch[1].trim()
+      // Convertir de "57.26 MB" a bytes
+      const sizeMatchMB = sizeText.match(/([\d.]+)\s*MB/i)
+      if (sizeMatchMB) {
+        const sizeInMB = parseFloat(sizeMatchMB[1])
+        fileSize = Math.round(sizeInMB * 1024 * 1024) // Convertir a bytes
+        console.log("📏 [Download Proxy] Tamaño extraído:", sizeText, "=", fileSize, "bytes")
+      }
+    }
+    
     if (!apkUrlMatch || !apkUrlMatch[1]) {
       console.error("❌ [Download Proxy] No se pudo encontrar la URL del APK en el HTML")
       // Fallback: intentar con la URL directa

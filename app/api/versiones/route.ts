@@ -2,6 +2,7 @@
 // Redirige al endpoint principal /api/versions
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+import { getDiawiFileSize, getDiawiDownloadUrl } from "@/lib/utils"
 
 // Forzar que esta ruta sea completamente dinámica
 export const dynamic = "force-dynamic"
@@ -87,6 +88,30 @@ export async function POST(request: Request) {
       )
     }
 
+    // Si no se proporcionó fileSize, intentar extraerlo desde Diawi
+    let finalFileSize = fileSize ? parseInt(fileSize) : null
+    
+    if (!finalFileSize) {
+      console.log("📏 [API] fileSize no proporcionado, extrayendo desde Diawi...")
+      try {
+        // Extraer el código de Diawi
+        const downloadUrl = getDiawiDownloadUrl(finalDiawiUrl)
+        const url = new URL(downloadUrl)
+        const code = url.pathname.replace(/^\//, "")
+        
+        // Obtener el tamaño desde Diawi
+        const extractedSize = await getDiawiFileSize(code)
+        if (extractedSize) {
+          finalFileSize = extractedSize
+          console.log("✅ [API] Tamaño extraído desde Diawi:", finalFileSize, "bytes")
+        } else {
+          console.warn("⚠️ [API] No se pudo extraer el tamaño desde Diawi")
+        }
+      } catch (error) {
+        console.error("❌ [API] Error al extraer tamaño desde Diawi:", error)
+      }
+    }
+
     console.log("💾 [API] Guardando en base de datos...")
     // Guardar en PostgreSQL usando Prisma (NO Supabase)
     const newVersion = await prisma.version.create({
@@ -95,7 +120,7 @@ export async function POST(request: Request) {
         version,
         build: parseInt(build),
         diawiUrl: finalDiawiUrl,
-        fileSize: fileSize ? parseInt(fileSize) : null,
+        fileSize: finalFileSize,
         changelog: changelog || null,
         releaseType,
         minAndroid: minAndroid || null,

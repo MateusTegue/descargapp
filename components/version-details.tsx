@@ -2,7 +2,7 @@
 
 import { format } from "date-fns"
 import { es } from "date-fns/locale/es"
-import { Download, Copy, ArrowLeft, Check } from "lucide-react"
+import { Download, Copy, ArrowLeft, Check, Loader2 } from "lucide-react"
 import { QRCodeSVG } from "qrcode.react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -18,15 +18,23 @@ interface VersionDetailsProps {
 
 export const VersionDetails = ({ version }: VersionDetailsProps) => {
   const [copied, setCopied] = useState(false)
+  const [downloading, setDownloading] = useState(false)
   const status = getVersionStatus(version.expiresAt ? new Date(version.expiresAt) : null)
   const releaseDate = new Date(version.releaseDate)
 
   const handleDownload = async () => {
+    // Si está expirado, no hacer nada
+    if (status.status === "expired") return
+
     try {
+      setDownloading(true)
+
       // Extraer el código de Diawi de la URL
       const downloadUrl = getDiawiDownloadUrl(version.diawiUrl)
       const url = new URL(downloadUrl)
       const code = url.pathname.replace(/^\//, "")
+      
+      console.log("📥 [Version Details] Iniciando descarga, código:", code)
       
       // Usar nuestro endpoint proxy para descargar desde nuestro dominio
       const proxyUrl = `/api/download/${code}`
@@ -35,10 +43,13 @@ export const VersionDetails = ({ version }: VersionDetailsProps) => {
       const response = await fetch(proxyUrl)
       
       if (!response.ok) {
+        console.error("❌ [Version Details] Error en respuesta:", response.status, response.statusText)
         throw new Error("Error al descargar el APK")
       }
       
       const blob = await response.blob()
+      console.log("✅ [Version Details] APK descargado, tamaño:", blob.size)
+      
       const blobUrl = window.URL.createObjectURL(blob)
       const link = document.createElement("a")
       link.href = blobUrl
@@ -48,8 +59,11 @@ export const VersionDetails = ({ version }: VersionDetailsProps) => {
       link.click()
       document.body.removeChild(link)
       window.URL.revokeObjectURL(blobUrl)
+      
+      setDownloading(false)
     } catch (error) {
-      console.error("Error al descargar:", error)
+      console.error("❌ [Version Details] Error al descargar:", error)
+      setDownloading(false)
       // Fallback: intentar descarga directa
       const downloadUrl = getDiawiDownloadUrl(version.diawiUrl)
       window.location.href = downloadUrl
@@ -153,10 +167,19 @@ export const VersionDetails = ({ version }: VersionDetailsProps) => {
                 <Button
                   onClick={handleDownload}
                   className="w-full"
-                  disabled={status.status === "expired"}
+                  disabled={status.status === "expired" || downloading}
                 >
-                  <Download className="mr-2 h-4 w-4" />
-                  Descargar APK
+                  {downloading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Descargando...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="mr-2 h-4 w-4" />
+                      Descargar APK
+                    </>
+                  )}
                 </Button>
                 <Button
                   onClick={handleCopyLink}

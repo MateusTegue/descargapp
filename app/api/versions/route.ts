@@ -1,0 +1,113 @@
+import { NextResponse } from "next/server"
+import { prisma } from "@/lib/prisma"
+
+export const dynamic = "force-dynamic"
+
+export async function GET() {
+  try {
+    const versions = await prisma.version.findMany({
+      orderBy: {
+        releaseDate: "desc",
+      },
+    })
+
+    return NextResponse.json(versions)
+  } catch (error) {
+    console.error("Error fetching versions:", error)
+    return NextResponse.json(
+      { error: "Error al obtener las versiones" },
+      { status: 500 }
+    )
+  }
+}
+
+export async function POST(request: Request) {
+  try {
+    console.log("🔔 [API] POST /api/versions - Iniciando...")
+    console.log("📥 [API] Headers recibidos:", JSON.stringify(Object.fromEntries(request.headers.entries()), null, 2))
+    
+    const body = await request.json()
+    console.log("📦 [API] Body recibido:", JSON.stringify(body, null, 2))
+
+    const {
+      appName = "A C Soluciones",
+      version,
+      build,
+      diawiUrl,
+      diawi_link, // Compatibilidad con GitHub Actions que use diawi_link
+      fileSize,
+      changelog,
+      releaseType = "Release",
+      minAndroid,
+      architectures,
+      expiresAt,
+    } = body
+
+    console.log("🔍 [API] Datos extraídos:", {
+      version,
+      build,
+      diawiUrl,
+      diawi_link,
+      appName,
+      releaseType,
+    })
+
+    // Acepta tanto diawiUrl como diawi_link para compatibilidad
+    const finalDiawiUrl = diawiUrl || diawi_link
+    console.log("🔗 [API] URL final de Diawi:", finalDiawiUrl)
+
+    if (!version || !build || !finalDiawiUrl) {
+      console.error("❌ [API] Faltan campos requeridos:", {
+        tieneVersion: !!version,
+        tieneBuild: !!build,
+        tieneDiawiUrl: !!finalDiawiUrl,
+      })
+      return NextResponse.json(
+        { error: "Faltan campos requeridos: version, build, diawiUrl (o diawi_link)" },
+        { status: 400 }
+      )
+    }
+
+    console.log("💾 [API] Guardando en base de datos...")
+    // Guardar en PostgreSQL usando Prisma (NO Supabase)
+    const newVersion = await prisma.version.create({
+      data: {
+        appName,
+        version,
+        build: parseInt(build),
+        diawiUrl: finalDiawiUrl,
+        fileSize: fileSize ? parseInt(fileSize) : null,
+        changelog: changelog || null,
+        releaseType,
+        minAndroid: minAndroid || null,
+        architectures: architectures || null,
+        expiresAt: expiresAt ? new Date(expiresAt) : null,
+      },
+    })
+
+    console.log("✅ [API] Versión creada exitosamente:", {
+      id: newVersion.id,
+      version: newVersion.version,
+      build: newVersion.build,
+    })
+
+    return NextResponse.json(
+      {
+        message: "Versión registrada",
+        version: newVersion,
+      },
+      { status: 201 }
+    )
+  } catch (error) {
+    console.error("❌ [API] Error creating version:", error)
+    console.error("❌ [API] Error details:", {
+      message: error instanceof Error ? error.message : "Unknown error",
+      stack: error instanceof Error ? error.stack : undefined,
+    })
+    return NextResponse.json(
+      { error: "Error al crear la versión" },
+      { status: 500 }
+    )
+  }
+}
+

@@ -1,0 +1,45 @@
+# Ejemplo de workflow de GitHub Actions para crear una versión en el portal
+# Este es un ejemplo - ajusta según tus necesidades
+
+name: Crear Versión en Portal
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Número de versión (ej: 0.0.1)'
+        required: true
+      build:
+        description: 'Número de build'
+        required: true
+      diawi_url:
+        description: 'URL de Diawi'
+        required: true
+      changelog:
+        description: 'Changelog (opcional)'
+        required: false
+
+jobs:
+  create-version:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Crear versión en portal
+        env:
+          PORTAL_API_URL: ${{ secrets.PORTAL_API_URL }}
+          VERSION: ${{ github.event.inputs.version }}
+          BUILD: ${{ github.event.inputs.build }}
+          DIAWI_URL: ${{ github.event.inputs.diawi_url }}
+          CHANGELOG: ${{ github.event.inputs.changelog }}
+        run: |
+          # POST a tu API de Next.js (NO Supabase)
+          # Endpoint: /api/versiones o /api/versions (ambos funcionan)
+          curl -X POST "$PORTAL_API_URL/api/versiones" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"version\": \"$VERSION\",
+              \"build\": $BUILD,
+              \"diawi_link\": \"$DIAWI_URL\",
+              \"changelog\": \"$CHANGELOG\",
+              \"releaseType\": \"Release\"
+            }"
+

@@ -1,0 +1,35 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL_UNPOOLED")
+}
+
+model Version {
+  id            String   @id @default(cuid())
+  appName       String   @default("A C Soluciones")
+  version       String   // ej: "0.0.1"
+  build         Int      // ej: 4
+  diawiUrl      String   // URL de descarga de Diawi
+  releaseDate   DateTime @default(now())
+  fileSize      Int?     // Tamaño en bytes
+  changelog     String?  @db.Text
+  releaseType   String   @default("Release") // Release, Pre-release, Hotfix
+  minAndroid    String?  // Versión mínima de Android
+  architectures String?  // Arquitecturas soportadas
+  expiresAt     DateTime? // Fecha de expiración
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([version])
+  @@index([releaseDate])
+  @@index([expiresAt])
+  @@map("versions")
+}
+

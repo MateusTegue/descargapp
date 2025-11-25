@@ -11,7 +11,22 @@ export async function GET() {
       },
     })
 
-    return NextResponse.json(versions)
+    // Convertir las fechas de Date a string para el tipo Version
+    const versionsWithStringDates = versions.map((version: {
+      releaseDate: Date
+      createdAt: Date
+      updatedAt: Date
+      expiresAt: Date | null
+      [key: string]: unknown
+    }) => ({
+      ...version,
+      releaseDate: version.releaseDate.toISOString(),
+      createdAt: version.createdAt.toISOString(),
+      updatedAt: version.updatedAt.toISOString(),
+      expiresAt: version.expiresAt ? version.expiresAt.toISOString() : null,
+    }))
+
+    return NextResponse.json(versionsWithStringDates)
   } catch (error) {
     console.error("Error fetching versions:", error)
     return NextResponse.json(
@@ -91,10 +106,19 @@ export async function POST(request: Request) {
       build: newVersion.build,
     })
 
+    // Convertir las fechas de Date a string para el tipo Version
+    const versionWithStringDates = {
+      ...newVersion,
+      releaseDate: newVersion.releaseDate.toISOString(),
+      createdAt: newVersion.createdAt.toISOString(),
+      updatedAt: newVersion.updatedAt.toISOString(),
+      expiresAt: newVersion.expiresAt ? newVersion.expiresAt.toISOString() : null,
+    }
+
     return NextResponse.json(
       {
         message: "Versión registrada",
-        version: newVersion,
+        version: versionWithStringDates,
       },
       { status: 201 }
     )

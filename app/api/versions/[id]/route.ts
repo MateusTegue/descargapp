@@ -21,7 +21,16 @@ export async function GET(
       )
     }
 
-    return NextResponse.json(version)
+    // Convertir las fechas de Date a string para el tipo Version
+    const versionWithStringDates = {
+      ...version,
+      releaseDate: version.releaseDate.toISOString(),
+      createdAt: version.createdAt.toISOString(),
+      updatedAt: version.updatedAt.toISOString(),
+      expiresAt: version.expiresAt ? version.expiresAt.toISOString() : null,
+    }
+
+    return NextResponse.json(versionWithStringDates)
   } catch (error) {
     console.error("Error fetching version:", error)
     return NextResponse.json(

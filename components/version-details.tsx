@@ -21,13 +21,39 @@ export const VersionDetails = ({ version }: VersionDetailsProps) => {
   const status = getVersionStatus(version.expiresAt ? new Date(version.expiresAt) : null)
   const releaseDate = new Date(version.releaseDate)
 
-  const handleDownload = () => {
-    // Usar la URL de descarga directa (i.diawi.com/CODE)
-    const downloadUrl = getDiawiDownloadUrl(version.diawiUrl)
-    
-    // Usar window.location.href para forzar la descarga directa
-    // Esto evita que el navegador redirija a la página web
-    window.location.href = downloadUrl
+  const handleDownload = async () => {
+    try {
+      // Extraer el código de Diawi de la URL
+      const downloadUrl = getDiawiDownloadUrl(version.diawiUrl)
+      const url = new URL(downloadUrl)
+      const code = url.pathname.replace(/^\//, "")
+      
+      // Usar nuestro endpoint proxy para descargar desde nuestro dominio
+      const proxyUrl = `/api/download/${code}`
+      
+      // Descargar usando fetch y crear blob
+      const response = await fetch(proxyUrl)
+      
+      if (!response.ok) {
+        throw new Error("Error al descargar el APK")
+      }
+      
+      const blob = await response.blob()
+      const blobUrl = window.URL.createObjectURL(blob)
+      const link = document.createElement("a")
+      link.href = blobUrl
+      link.download = `${version.appName}-v${version.version}-build${version.build}.apk`
+      link.style.display = "none"
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(blobUrl)
+    } catch (error) {
+      console.error("Error al descargar:", error)
+      // Fallback: intentar descarga directa
+      const downloadUrl = getDiawiDownloadUrl(version.diawiUrl)
+      window.location.href = downloadUrl
+    }
   }
 
   const handleCopyLink = async () => {

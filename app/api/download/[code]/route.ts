@@ -99,9 +99,13 @@ export async function GET(
         status: 200,
         headers: {
           "Content-Type": "application/vnd.android.package-archive",
-          "Content-Disposition": `attachment; filename="app.apk"`,
+          "Content-Disposition": `attachment; filename="app.apk"; filename*=UTF-8''app.apk`,
           "Content-Length": blob.size.toString(),
           "Cache-Control": "no-cache, no-store, must-revalidate",
+          "Pragma": "no-cache",
+          "Expires": "0",
+          "X-Content-Type-Options": "nosniff",
+          "Accept-Ranges": "bytes",
         },
       })
     }
@@ -129,16 +133,19 @@ export async function GET(
     const blob = await apkResponse.blob()
     const arrayBuffer = await blob.arrayBuffer()
 
-    // Retornar el APK con headers apropiados para forzar la descarga
+    // Retornar el APK con headers apropiados para forzar la descarga automática
+    // En dispositivos móviles Android, estos headers fuerzan la descarga inmediata
     return new NextResponse(arrayBuffer, {
       status: 200,
       headers: {
         "Content-Type": "application/vnd.android.package-archive",
-        "Content-Disposition": `attachment; filename="app.apk"`,
+        "Content-Disposition": `attachment; filename="app.apk"; filename*=UTF-8''app.apk`,
         "Content-Length": blob.size.toString(),
         "Cache-Control": "no-cache, no-store, must-revalidate",
         "Pragma": "no-cache",
         "Expires": "0",
+        "X-Content-Type-Options": "nosniff",
+        "Accept-Ranges": "bytes",
       },
     })
   } catch (error) {

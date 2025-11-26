@@ -7,7 +7,7 @@ import { QRCodeSVG } from "qrcode.react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { getVersionStatus, formatFileSize, getDiawiDownloadUrl } from "@/lib/utils"
+import { getVersionStatus, formatFileSize, getDiawiDownloadUrl, getProxyDownloadUrl } from "@/lib/utils"
 import Link from "next/link"
 import { useState } from "react"
 import type { Version } from "@/types/version"
@@ -231,10 +231,16 @@ export const VersionDetails = ({ version }: VersionDetailsProps) => {
             <div className="space-y-4">
               <h3 className="font-semibold">Código QR para instalación</h3>
               <div className="flex justify-center p-4 bg-white dark:bg-gray-800 rounded-lg">
-                <QRCodeSVG value={getDiawiDownloadUrl(version.diawiUrl)} size={200} />
+                <QRCodeSVG 
+                  value={typeof window !== "undefined" 
+                    ? `${window.location.origin}${getProxyDownloadUrl(version.diawiUrl)}`
+                    : getProxyDownloadUrl(version.diawiUrl)
+                  } 
+                  size={200} 
+                />
               </div>
               <p className="text-sm text-muted-foreground text-center">
-                Escanea este código con tu dispositivo Android para instalar
+                Escanea este código con tu dispositivo Android para descargar automáticamente
               </p>
             </div>
             <div className="space-y-4">

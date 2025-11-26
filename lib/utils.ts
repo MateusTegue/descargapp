@@ -264,6 +264,32 @@ export const getDiawiAppDetails = async (code: string): Promise<{
 }
 
 /**
+ * Extrae el código de Diawi de una URL
+ * @param diawiUrl URL de Diawi (puede ser webapp.diawi.com/install/CODE o diawi.com/CODE)
+ * @returns Código de Diawi (ej: "36Y6j7")
+ */
+export const getDiawiCode = (diawiUrl: string): string | null => {
+  try {
+    const url = new URL(diawiUrl)
+    let code = ""
+    
+    // Extraer el código de diferentes formatos de URL
+    if (url.pathname.includes("/install/")) {
+      // Formato: /install/CODE
+      code = url.pathname.split("/install/")[1]?.split("/")[0] || ""
+    } else {
+      // Formato: /CODE
+      code = url.pathname.replace(/^\//, "").split("/")[0] || ""
+    }
+    
+    return code || null
+  } catch (error) {
+    console.error("Error al extraer código de Diawi:", error)
+    return null
+  }
+}
+
+/**
  * Convierte una URL de Diawi a la URL de descarga directa del APK
  * @param diawiUrl URL de Diawi (puede ser webapp.diawi.com/install/CODE o diawi.com/CODE)
  * @returns URL de descarga directa (i.diawi.com/CODE)
@@ -306,5 +332,34 @@ export const getDiawiDownloadUrl = (diawiUrl: string): string => {
     // Si hay un error, retornar la URL original
     return diawiUrl
   }
+}
+
+/**
+ * Genera la URL de descarga directa del APK usando nuestro endpoint proxy
+ * Esta URL fuerza la descarga automática del APK al acceder desde un dispositivo móvil
+ * @param diawiUrl URL de Diawi (puede ser webapp.diawi.com/install/CODE o diawi.com/CODE)
+ * @param baseUrl URL base del sitio (opcional, se detecta automáticamente en el cliente)
+ * @returns URL de descarga directa usando nuestro endpoint (/api/download/CODE)
+ */
+export const getProxyDownloadUrl = (diawiUrl: string, baseUrl?: string): string => {
+  const code = getDiawiCode(diawiUrl)
+  
+  if (!code) {
+    // Fallback a la URL de Diawi si no se puede extraer el código
+    return getDiawiDownloadUrl(diawiUrl)
+  }
+  
+  // Si estamos en el cliente, usar la URL relativa
+  if (typeof window !== "undefined") {
+    return `/api/download/${code}`
+  }
+  
+  // Si estamos en el servidor y se proporciona baseUrl, usarla
+  if (baseUrl) {
+    return `${baseUrl}/api/download/${code}`
+  }
+  
+  // Fallback: usar URL relativa
+  return `/api/download/${code}`
 }
 

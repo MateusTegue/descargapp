@@ -42,9 +42,7 @@ export const getVersionStatus = (expiresAt: Date | null | undefined): {
  */
 export const getDiawiFileSize = async (code: string): Promise<number | null> => {
   try {
-    console.log("📏 [Utils] Iniciando extracción de tamaño para código:", code)
     const installPageUrl = `https://webapp.diawi.com/install/${code}`
-    console.log("📏 [Utils] URL de la página:", installPageUrl)
     
     const response = await fetch(installPageUrl, {
       method: "GET",
@@ -55,12 +53,11 @@ export const getDiawiFileSize = async (code: string): Promise<number | null> => 
     })
 
     if (!response.ok) {
-      console.warn("⚠️ [Utils] No se pudo obtener la página de Diawi. Status:", response.status)
+      console.warn("[Utils] No se pudo obtener la página de Diawi. Status:", response.status)
       return null
     }
 
     const html = await response.text()
-    console.log("📏 [Utils] HTML obtenido, longitud:", html.length)
     
     // Buscar el patrón: <div class="item-title">Size</div><div class="item-after">57.26 MB</div>
     // También buscar variaciones del patrón
@@ -78,7 +75,6 @@ export const getDiawiFileSize = async (code: string): Promise<number | null> => 
     
     if (sizeMatch && sizeMatch[1]) {
       const sizeText = sizeMatch[1].trim()
-      console.log("📏 [Utils] Texto de tamaño encontrado:", sizeText)
       
       // Convertir de diferentes formatos a bytes
       let sizeInBytes: number | null = null
@@ -88,7 +84,6 @@ export const getDiawiFileSize = async (code: string): Promise<number | null> => 
       if (sizeMatchMB) {
         const sizeInMB = parseFloat(sizeMatchMB[1])
         sizeInBytes = Math.round(sizeInMB * 1024 * 1024)
-        console.log("📏 [Utils] Tamaño extraído (MB):", sizeText, "=", sizeInBytes, "bytes")
         return sizeInBytes
       }
       
@@ -97,7 +92,6 @@ export const getDiawiFileSize = async (code: string): Promise<number | null> => 
       if (sizeMatchKB) {
         const sizeInKB = parseFloat(sizeMatchKB[1])
         sizeInBytes = Math.round(sizeInKB * 1024)
-        console.log("📏 [Utils] Tamaño extraído (KB):", sizeText, "=", sizeInBytes, "bytes")
         return sizeInBytes
       }
       
@@ -106,27 +100,165 @@ export const getDiawiFileSize = async (code: string): Promise<number | null> => 
       if (sizeMatchGB) {
         const sizeInGB = parseFloat(sizeMatchGB[1])
         sizeInBytes = Math.round(sizeInGB * 1024 * 1024 * 1024)
-        console.log("📏 [Utils] Tamaño extraído (GB):", sizeText, "=", sizeInBytes, "bytes")
         return sizeInBytes
       }
       
-      console.warn("⚠️ [Utils] No se pudo parsear el formato del tamaño:", sizeText)
+      console.warn("[Utils] No se pudo parsear el formato del tamaño:", sizeText)
     } else {
-      console.warn("⚠️ [Utils] No se encontró el patrón de tamaño en el HTML")
-      // Log una porción del HTML para debug
-      const sizeSection = html.match(/Size[^<]{0,200}/i)
-      if (sizeSection) {
-        console.log("📏 [Utils] Sección relevante del HTML:", sizeSection[0])
+      // Si no se encuentra en el HTML, intentar obtener el tamaño directamente del APK
+      try {
+        const apkUrlMatch = html.match(/href="(https:\/\/[^"]+\.files\.diawi\.com\/app-file\/[^"]+\.apk)"/)
+        if (apkUrlMatch && apkUrlMatch[1]) {
+          const apkUrl = apkUrlMatch[1]
+          const headResponse = await fetch(apkUrl, {
+            method: "HEAD",
+            headers: {
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+            },
+          })
+          
+          if (headResponse.ok) {
+            const contentLength = headResponse.headers.get("content-length")
+            if (contentLength) {
+              const sizeInBytes = parseInt(contentLength, 10)
+              if (!isNaN(sizeInBytes) && sizeInBytes > 0) {
+                return sizeInBytes
+              }
+            }
+          }
+        }
+      } catch (headError) {
+        console.warn("[Utils] No se pudo obtener el tamaño mediante HEAD request:", headError)
       }
+      
+      console.warn("[Utils] No se encontró el patrón de tamaño en el HTML")
     }
     
     return null
   } catch (error) {
-    console.error("❌ [Utils] Error al extraer tamaño desde Diawi:", error)
+    console.error("[Utils] Error al extraer tamaño desde Diawi:", error)
     if (error instanceof Error) {
-      console.error("❌ [Utils] Mensaje de error:", error.message)
-      console.error("❌ [Utils] Stack:", error.stack)
+      console.error("[Utils] Mensaje de error:", error.message)
+      console.error("[Utils] Stack:", error.stack)
     }
+    return null
+  }
+}
+
+/**
+ * Extrae los detalles del APK desde la página de Diawi
+ * @param code Código de Diawi (ej: "RPGwsH")
+ * @returns Objeto con los detalles del APK o null si no se puede obtener
+ */
+export const getDiawiAppDetails = async (code: string): Promise<{
+  packageName?: string
+  minAndroid?: string
+  targetAndroid?: string
+  supportedScreens?: string
+  supportedDensities?: string
+  debuggable?: boolean
+  permissions?: string
+  signer?: string
+  uploadedDate?: string
+} | null> => {
+  try {
+    const installPageUrl = `https://webapp.diawi.com/install/${code}`
+    
+    const response = await fetch(installPageUrl, {
+      method: "GET",
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      },
+    })
+
+    if (!response.ok) {
+      return null
+    }
+
+    const html = await response.text()
+    const details: {
+      packageName?: string
+      minAndroid?: string
+      targetAndroid?: string
+      supportedScreens?: string
+      supportedDensities?: string
+      debuggable?: boolean
+      permissions?: string
+      signer?: string
+      uploadedDate?: string
+    } = {}
+
+    // Extraer Package
+    const packageMatch = html.match(/<div class="item-title">Package<\/div>\s*<div class="item-after">([^<]+)<\/div>/)
+    if (packageMatch && packageMatch[1]) {
+      details.packageName = packageMatch[1].trim()
+    }
+
+    // Extraer Minimum OS version
+    const minAndroidMatch = html.match(/<div class="item-title">Minimum OS version<\/div>\s*<div class="item-after">([^<]+)<\/div>/)
+    if (minAndroidMatch && minAndroidMatch[1]) {
+      details.minAndroid = minAndroidMatch[1].trim()
+    }
+
+    // Extraer Target OS version
+    const targetAndroidMatch = html.match(/<div class="item-title">Target OS version<\/div>\s*<div class="item-after">([^<]+)<\/div>/)
+    if (targetAndroidMatch && targetAndroidMatch[1]) {
+      details.targetAndroid = targetAndroidMatch[1].trim()
+    }
+
+    // Extraer Supported screens
+    const screensMatch = html.match(/<div class="item-title">Supported screens<\/div>\s*<div class="item-after">[^<]*<span[^>]*>(\d+)<\/span>/)
+    if (screensMatch && screensMatch[1]) {
+      details.supportedScreens = screensMatch[1].trim()
+    }
+
+    // Extraer Supported densities
+    const densitiesMatch = html.match(/<div class="item-title">Supported densities<\/div>\s*<div class="item-after">[^<]*<span[^>]*>(\d+)<\/span>/)
+    if (densitiesMatch && densitiesMatch[1]) {
+      details.supportedDensities = densitiesMatch[1].trim()
+    }
+
+    // Extraer Supported architectures
+    const archMatch = html.match(/<div class="item-title">Supported architectures<\/div>\s*<div class="item-after">([^<]+)<\/div>/)
+    // Este ya se maneja en otro lugar, pero lo incluimos aquí por consistencia
+
+    // Extraer Debuggable
+    const debuggableMatch = html.match(/<div class="item-title">Debuggable<\/div>\s*<div class="item-after">([^<]+)<\/div>/)
+    if (debuggableMatch && debuggableMatch[1]) {
+      details.debuggable = debuggableMatch[1].trim().toLowerCase() === "yes"
+    }
+
+    // Extraer Permissions (contar)
+    const permissionsMatch = html.match(/<div class="item-title">Permissions<\/div>\s*<div class="item-after">[^<]*<span[^>]*>(\d+)<\/span>/)
+    if (permissionsMatch && permissionsMatch[1]) {
+      // Intentar extraer la lista de permisos
+      const permissionsListMatch = html.match(/<div class="item-title">Permissions<\/div>[\s\S]*?<div class="accordion-item-content">[\s\S]*?<div class="block block-strong">([\s\S]*?)<\/div>[\s\S]*?<\/div>[\s\S]*?<\/div>/)
+      if (permissionsListMatch && permissionsListMatch[1]) {
+        const permissionsHtml = permissionsListMatch[1]
+        const permissionItems = permissionsHtml.match(/<div class="item-title">([^<]+)<\/div>/g)
+        if (permissionItems) {
+          const permissionsList = permissionItems.map(item => item.replace(/<[^>]+>/g, "").trim()).filter(Boolean)
+          details.permissions = permissionsList.join(", ")
+        }
+      }
+    }
+
+    // Extraer Signer
+    const signerMatch = html.match(/<div class="item-title">Signer<\/div>\s*<div class="item-after">([^<]+)<\/div>/)
+    if (signerMatch && signerMatch[1]) {
+      details.signer = signerMatch[1].trim()
+    }
+
+    // Extraer Uploaded date
+    const uploadedMatch = html.match(/<div class="item-title">Uploaded<\/div>\s*<div class="item-after">([^<]+)<\/div>/)
+    if (uploadedMatch && uploadedMatch[1]) {
+      details.uploadedDate = uploadedMatch[1].trim()
+    }
+
+    return Object.keys(details).length > 0 ? details : null
+  } catch (error) {
+    console.error("[Utils] Error al extraer detalles del APK desde Diawi:", error)
     return null
   }
 }

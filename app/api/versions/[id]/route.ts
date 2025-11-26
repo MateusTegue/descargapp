@@ -30,6 +30,7 @@ export async function GET(
       createdAt: version.createdAt.toISOString(),
       updatedAt: version.updatedAt.toISOString(),
       expiresAt: version.expiresAt ? version.expiresAt.toISOString() : null,
+      uploadedDate: version.uploadedDate ? version.uploadedDate.toISOString() : null,
     }
 
     return NextResponse.json(versionWithStringDates)

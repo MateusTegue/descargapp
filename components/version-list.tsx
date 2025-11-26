@@ -17,7 +17,7 @@ export const VersionList = () => {
   const [currentPage, setCurrentPage] = useState(1)
   const [searchQuery, setSearchQuery] = useState("")
   const [versionFilter, setVersionFilter] = useState<string>("all")
-  const [statusFilter, setStatusFilter] = useState<string>("all")
+  const [statusFilter, setStatusFilter] = useState<string>("prod")
 
   useEffect(() => {
     const fetchVersions = async () => {
@@ -56,22 +56,10 @@ export const VersionList = () => {
       filtered = filtered.filter((v) => v.version === versionFilter)
     }
 
-    // Filtro de estado
-    if (statusFilter !== "all") {
-      const now = new Date()
-      filtered = filtered.filter((v) => {
-        if (!v.expiresAt) {
-          return statusFilter === "available"
-        }
-        const expiresAt = new Date(v.expiresAt)
-        const diffDays = Math.ceil((expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-        
-        if (statusFilter === "expired") return diffDays < 0
-        if (statusFilter === "expiring") return diffDays >= 0 && diffDays <= 7
-        if (statusFilter === "available") return diffDays > 7 || !v.expiresAt
-        return true
-      })
-    }
+    // Filtro de estado (dev/prod basado en releaseType)
+    filtered = filtered.filter((v) => {
+      return v.releaseType === statusFilter
+    })
 
     setFilteredVersions(filtered)
     setCurrentPage(1)
@@ -122,10 +110,8 @@ export const VersionList = () => {
             <SelectValue placeholder="Filtrar por estado" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todos los estados</SelectItem>
-            <SelectItem value="available">Disponible</SelectItem>
-            <SelectItem value="expiring">Expira pronto</SelectItem>
-            <SelectItem value="expired">Expirada</SelectItem>
+            <SelectItem value="dev">Dev</SelectItem>
+            <SelectItem value="prod">Prod</SelectItem>
           </SelectContent>
         </Select>
         <div className="flex items-center text-sm text-muted-foreground">

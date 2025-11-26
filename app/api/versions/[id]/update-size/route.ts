@@ -28,8 +28,6 @@ export async function POST(
       )
     }
 
-    console.log("📏 [Update Size] Extrayendo tamaño para versión:", id)
-
     // Extraer el código de Diawi
     const downloadUrl = getDiawiDownloadUrl(version.diawiUrl)
     const url = new URL(downloadUrl)
@@ -51,8 +49,6 @@ export async function POST(
       data: { fileSize },
     })
 
-    console.log("✅ [Update Size] Tamaño actualizado:", fileSize, "bytes")
-
     // Convertir las fechas de Date a string
     const versionWithStringDates = {
       ...updatedVersion,
@@ -67,7 +63,7 @@ export async function POST(
       version: versionWithStringDates,
     })
   } catch (error) {
-    console.error("❌ [Update Size] Error:", error)
+    console.error("[Update Size] Error:", error)
     return NextResponse.json(
       { error: "Error al actualizar el tamaño" },
       { status: 500 }

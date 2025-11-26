@@ -119,6 +119,12 @@ export const VersionCard = ({ version }: VersionCardProps) => {
     return "success"
   }
 
+  const getReleaseTypeVariant = () => {
+    if (version.releaseType === "prod") return "default"
+    if (version.releaseType === "dev") return "secondary"
+    return "outline"
+  }
+
   const handleDownload = async (e: React.MouseEvent) => {
     e.preventDefault()
     
@@ -171,9 +177,11 @@ export const VersionCard = ({ version }: VersionCardProps) => {
           <div className="flex-1 space-y-2">
             <div className="flex items-center gap-3">
               <h3 className="text-lg font-semibold">{version.appName}</h3>
-              <Badge variant={getStatusVariant()}>{status.message}</Badge>
               {version.releaseType && (
-                <Badge variant="outline">{version.releaseType}</Badge>
+                <Badge variant={getReleaseTypeVariant()}>{version.releaseType}</Badge>
+              )}
+              {status.status !== "expired" && (
+                <Badge variant={getStatusVariant()}>{status.message}</Badge>
               )}
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">

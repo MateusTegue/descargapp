@@ -12,24 +12,31 @@ datasource db {
 }
 
 model Version {
-  id            String   @id @default(cuid())
-  appName       String   @default("A C Soluciones")
-  version       String   // ej: "0.0.1"
-  build         Int      // ej: 4
-  diawiUrl      String   // URL de descarga de Diawi
-  releaseDate   DateTime @default(now())
-  fileSize      Int?     // Tamaño en bytes
-  changelog     String?  @db.Text
-  releaseType   String   @default("Release") // Release, Pre-release, Hotfix
-  minAndroid    String?  // Versión mínima de Android
-  architectures String?  // Arquitecturas soportadas
-  expiresAt     DateTime? // Fecha de expiración
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id                 String    @id @default(cuid())
+  appName            String    @default("A C Soluciones")
+  version            String // ej: "0.0.1"
+  build              Int // ej: 4
+  diawiUrl           String // URL de descarga de Diawi
+  releaseDate        DateTime  @default(now())
+  fileSize           Int? // Tamaño en bytes
+  changelog          String?   @db.Text
+  releaseType        String    @default("Release") // Release, Pre-release, Hotfix, dev, prod
+  packageName        String? // Package name (ej: com.example.flutter_a_c_soluciones)
+  minAndroid         String? // Versión mínima de Android (ej: "24 - Nougat 7.0")
+  targetAndroid      String? // Versión objetivo de Android (ej: "36 -")
+  architectures      String? // Arquitecturas soportadas (ej: "arm64-v8a, armeabi-v7a, x86_64")
+  supportedScreens   String? // Pantallas soportadas (ej: "4")
+  supportedDensities String? // Densidades soportadas (ej: "5")
+  debuggable         Boolean? // Si es debuggable
+  permissions        String?   @db.Text // Permisos (JSON string o lista separada por comas)
+  signer             String? // Información del firmante (ej: "C=US, O=Android, CN=Android Debug")
+  uploadedDate       DateTime? // Fecha de subida a Diawi
+  expiresAt          DateTime? // Fecha de expiración
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 
   @@index([version])
   @@index([releaseDate])
   @@index([expiresAt])
   @@map("versions")
 }
-

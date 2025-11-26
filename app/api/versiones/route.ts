@@ -2,7 +2,7 @@
 // Redirige al endpoint principal /api/versions
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { getDiawiFileSize, getDiawiDownloadUrl } from "@/lib/utils"
+import { getDiawiFileSize, getDiawiDownloadUrl, getDiawiAppDetails } from "@/lib/utils"
 
 // Forzar que esta ruta sea completamente dinámica
 export const dynamic = "force-dynamic"
@@ -17,18 +17,13 @@ export async function GET() {
     })
 
     // Convertir las fechas de Date a string para el tipo Version
-    const versionsWithStringDates = versions.map((version: {
-      releaseDate: Date
-      createdAt: Date
-      updatedAt: Date
-      expiresAt: Date | null
-      [key: string]: unknown
-    }) => ({
+    const versionsWithStringDates = versions.map((version: any) => ({
       ...version,
       releaseDate: version.releaseDate.toISOString(),
       createdAt: version.createdAt.toISOString(),
       updatedAt: version.updatedAt.toISOString(),
       expiresAt: version.expiresAt ? version.expiresAt.toISOString() : null,
+      uploadedDate: version.uploadedDate ? version.uploadedDate.toISOString() : null,
     }))
 
     return NextResponse.json(versionsWithStringDates)
@@ -43,11 +38,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    console.log("🔔 [API] POST /api/versiones - Iniciando...")
-    console.log("📥 [API] Headers recibidos:", JSON.stringify(Object.fromEntries(request.headers.entries()), null, 2))
-    
     const body = await request.json()
-    console.log("📦 [API] Body recibido:", JSON.stringify(body, null, 2))
 
     const {
       appName = "A C Soluciones",
@@ -63,21 +54,11 @@ export async function POST(request: Request) {
       expiresAt,
     } = body
 
-    console.log("🔍 [API] Datos extraídos:", {
-      version,
-      build,
-      diawiUrl,
-      diawi_link,
-      appName,
-      releaseType,
-    })
-
     // Acepta tanto diawiUrl como diawi_link
     const finalDiawiUrl = diawiUrl || diawi_link
-    console.log("🔗 [API] URL final de Diawi:", finalDiawiUrl)
 
     if (!version || !build || !finalDiawiUrl) {
-      console.error("❌ [API] Faltan campos requeridos:", {
+      console.error("[API] Faltan campos requeridos:", {
         tieneVersion: !!version,
         tieneBuild: !!build,
         tieneDiawiUrl: !!finalDiawiUrl,
@@ -88,31 +69,60 @@ export async function POST(request: Request) {
       )
     }
 
+    // Extraer el código de Diawi
+    const downloadUrl = getDiawiDownloadUrl(finalDiawiUrl)
+    const url = new URL(downloadUrl)
+    const code = url.pathname.replace(/^\//, "")
+
     // Si no se proporcionó fileSize, intentar extraerlo desde Diawi
     let finalFileSize = fileSize ? parseInt(fileSize) : null
     
     if (!finalFileSize) {
-      console.log("📏 [API] fileSize no proporcionado, extrayendo desde Diawi...")
       try {
-        // Extraer el código de Diawi
-        const downloadUrl = getDiawiDownloadUrl(finalDiawiUrl)
-        const url = new URL(downloadUrl)
-        const code = url.pathname.replace(/^\//, "")
-        
         // Obtener el tamaño desde Diawi
         const extractedSize = await getDiawiFileSize(code)
         if (extractedSize) {
           finalFileSize = extractedSize
-          console.log("✅ [API] Tamaño extraído desde Diawi:", finalFileSize, "bytes")
         } else {
-          console.warn("⚠️ [API] No se pudo extraer el tamaño desde Diawi")
+          console.warn("[API] No se pudo extraer el tamaño desde Diawi")
         }
       } catch (error) {
-        console.error("❌ [API] Error al extraer tamaño desde Diawi:", error)
+        console.error("[API] Error al extraer tamaño desde Diawi:", error)
       }
     }
 
-    console.log("💾 [API] Guardando en base de datos...")
+    // Extraer detalles adicionales del APK desde Diawi
+    let appDetails: {
+      packageName?: string
+      minAndroid?: string
+      targetAndroid?: string
+      supportedScreens?: string
+      supportedDensities?: string
+      debuggable?: boolean
+      permissions?: string
+      signer?: string
+      uploadedDate?: string
+    } | null = null
+
+    try {
+      appDetails = await getDiawiAppDetails(code)
+    } catch (error) {
+      console.error("[API] Error al extraer detalles del APK desde Diawi:", error)
+    }
+
+    // Parsear uploadedDate si existe
+    let parsedUploadedDate: Date | null = null
+    if (appDetails?.uploadedDate) {
+      try {
+        parsedUploadedDate = new Date(appDetails.uploadedDate)
+        if (isNaN(parsedUploadedDate.getTime())) {
+          parsedUploadedDate = null
+        }
+      } catch {
+        parsedUploadedDate = null
+      }
+    }
+
     // Guardar en PostgreSQL usando Prisma (NO Supabase)
     const newVersion = await prisma.version.create({
       data: {
@@ -123,16 +133,18 @@ export async function POST(request: Request) {
         fileSize: finalFileSize,
         changelog: changelog || null,
         releaseType,
-        minAndroid: minAndroid || null,
+        packageName: appDetails?.packageName || null,
+        minAndroid: minAndroid || appDetails?.minAndroid || null,
+        targetAndroid: appDetails?.targetAndroid || null,
         architectures: architectures || null,
+        supportedScreens: appDetails?.supportedScreens || null,
+        supportedDensities: appDetails?.supportedDensities || null,
+        debuggable: appDetails?.debuggable ?? null,
+        permissions: appDetails?.permissions || null,
+        signer: appDetails?.signer || null,
+        uploadedDate: parsedUploadedDate,
         expiresAt: expiresAt ? new Date(expiresAt) : null,
       },
-    })
-
-    console.log("✅ [API] Versión creada exitosamente:", {
-      id: newVersion.id,
-      version: newVersion.version,
-      build: newVersion.build,
     })
 
     // Convertir las fechas de Date a string para el tipo Version
@@ -142,6 +154,7 @@ export async function POST(request: Request) {
       createdAt: newVersion.createdAt.toISOString(),
       updatedAt: newVersion.updatedAt.toISOString(),
       expiresAt: newVersion.expiresAt ? newVersion.expiresAt.toISOString() : null,
+      uploadedDate: newVersion.uploadedDate ? newVersion.uploadedDate.toISOString() : null,
     }
 
     return NextResponse.json(
@@ -152,8 +165,8 @@ export async function POST(request: Request) {
       { status: 201 }
     )
   } catch (error) {
-    console.error("❌ [API] Error creating version:", error)
-    console.error("❌ [API] Error details:", {
+    console.error("[API] Error creating version:", error)
+    console.error("[API] Error details:", {
       message: error instanceof Error ? error.message : "Unknown error",
       stack: error instanceof Error ? error.stack : undefined,
     })

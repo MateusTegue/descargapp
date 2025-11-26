@@ -7,8 +7,6 @@ import type { Version } from "@/types/version"
 async function getVersion(id: string): Promise<Version | null> {
   try {
     // Usar Prisma directamente en lugar de fetch para mayor confiabilidad
-    console.log("🔍 [Version Page] Fetching version from database, ID:", id)
-    
     const version = await prisma.version.findUnique({
       where: {
         id,
@@ -16,7 +14,7 @@ async function getVersion(id: string): Promise<Version | null> {
     })
 
     if (!version) {
-      console.error("❌ [Version Page] Version not found:", id)
+      console.error("[Version Page] Version not found:", id)
       return null
     }
 
@@ -27,12 +25,12 @@ async function getVersion(id: string): Promise<Version | null> {
       createdAt: version.createdAt.toISOString(),
       updatedAt: version.updatedAt.toISOString(),
       expiresAt: version.expiresAt ? version.expiresAt.toISOString() : null,
+      uploadedDate: version.uploadedDate ? version.uploadedDate.toISOString() : null,
     }
 
-    console.log("✅ [Version Page] Version fetched successfully:", version.id)
     return versionWithStringDates
   } catch (error) {
-    console.error("❌ [Version Page] Error fetching version:", error)
+    console.error("[Version Page] Error fetching version:", error)
     return null
   }
 }

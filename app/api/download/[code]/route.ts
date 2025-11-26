@@ -21,8 +21,6 @@ export async function GET(
       )
     }
 
-    console.log("📥 [Download Proxy] Obteniendo URL del APK para código:", code)
-
     // Primero, obtener la página de Diawi para extraer la URL real del APK
     const installPageUrl = `https://webapp.diawi.com/install/${code}`
     
@@ -35,7 +33,7 @@ export async function GET(
     })
 
     if (!pageResponse.ok) {
-      console.error("❌ [Download Proxy] Error al obtener página de Diawi:", pageResponse.status)
+      console.error("[Download Proxy] Error al obtener página de Diawi:", pageResponse.status)
       return NextResponse.json(
         { error: "Error al obtener información del APK" },
         { status: pageResponse.status }
@@ -60,15 +58,13 @@ export async function GET(
       if (sizeMatchMB) {
         const sizeInMB = parseFloat(sizeMatchMB[1])
         fileSize = Math.round(sizeInMB * 1024 * 1024) // Convertir a bytes
-        console.log("📏 [Download Proxy] Tamaño extraído:", sizeText, "=", fileSize, "bytes")
       }
     }
     
     if (!apkUrlMatch || !apkUrlMatch[1]) {
-      console.error("❌ [Download Proxy] No se pudo encontrar la URL del APK en el HTML")
+      console.error("[Download Proxy] No se pudo encontrar la URL del APK en el HTML")
       // Fallback: intentar con la URL directa
       const fallbackUrl = `https://i.diawi.com/${code}`
-      console.log("🔄 [Download Proxy] Intentando con URL fallback:", fallbackUrl)
       
       const fallbackResponse = await fetch(fallbackUrl, {
         method: "GET",
@@ -111,7 +107,6 @@ export async function GET(
     }
 
     const apkUrl = apkUrlMatch[1]
-    console.log("✅ [Download Proxy] URL del APK encontrada:", apkUrl)
 
     // Descargar el APK desde la URL real
     const apkResponse = await fetch(apkUrl, {
@@ -123,7 +118,7 @@ export async function GET(
     })
 
     if (!apkResponse.ok) {
-      console.error("❌ [Download Proxy] Error al descargar APK:", apkResponse.status)
+      console.error("[Download Proxy] Error al descargar APK:", apkResponse.status)
       return NextResponse.json(
         { error: "Error al descargar el APK" },
         { status: apkResponse.status }
@@ -133,8 +128,6 @@ export async function GET(
     // Obtener el blob del APK
     const blob = await apkResponse.blob()
     const arrayBuffer = await blob.arrayBuffer()
-
-    console.log("✅ [Download Proxy] APK descargado exitosamente, tamaño:", blob.size)
 
     // Retornar el APK con headers apropiados para forzar la descarga
     return new NextResponse(arrayBuffer, {
@@ -149,7 +142,7 @@ export async function GET(
       },
     })
   } catch (error) {
-    console.error("❌ [Download Proxy] Error:", error)
+    console.error("[Download Proxy] Error:", error)
     return NextResponse.json(
       { error: "Error al procesar la descarga" },
       { status: 500 }

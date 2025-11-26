@@ -6,8 +6,6 @@ const { PrismaClient } = require("@prisma/client")
 const prisma = new PrismaClient()
 
 async function main() {
-  console.log("🌱 Iniciando seed de la base de datos...")
-
   // Crear algunas versiones de ejemplo
   const version1 = await prisma.version.create({
     data: {
@@ -54,17 +52,11 @@ async function main() {
       expiresAt: new Date("2025-12-01T23:59:59Z"), // Expira en 7 días
     },
   })
-
-  console.log("✅ Versiones de ejemplo creadas:")
-  console.log(`   - Versión ${version1.version} (Build #${version1.build})`)
-  console.log(`   - Versión ${version2.version} (Build #${version2.build})`)
-  console.log(`   - Versión ${version3.version} (Build #${version3.build})`)
-  console.log("\n🎉 Seed completado exitosamente!")
 }
 
 main()
   .catch((e) => {
-    console.error("❌ Error durante el seed:", e)
+    console.error("Error durante el seed:", e)
     process.exit(1)
   })
   .finally(async () => {

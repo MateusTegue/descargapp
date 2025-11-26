@@ -34,8 +34,6 @@ export const VersionDetails = ({ version }: VersionDetailsProps) => {
       const url = new URL(downloadUrl)
       const code = url.pathname.replace(/^\//, "")
       
-      console.log("📥 [Version Details] Iniciando descarga, código:", code)
-      
       // Usar nuestro endpoint proxy para descargar desde nuestro dominio
       const proxyUrl = `/api/download/${code}`
       
@@ -43,12 +41,11 @@ export const VersionDetails = ({ version }: VersionDetailsProps) => {
       const response = await fetch(proxyUrl)
       
       if (!response.ok) {
-        console.error("❌ [Version Details] Error en respuesta:", response.status, response.statusText)
+        console.error("[Version Details] Error en respuesta:", response.status, response.statusText)
         throw new Error("Error al descargar el APK")
       }
       
       const blob = await response.blob()
-      console.log("✅ [Version Details] APK descargado, tamaño:", blob.size)
       
       const blobUrl = window.URL.createObjectURL(blob)
       const link = document.createElement("a")
@@ -62,7 +59,7 @@ export const VersionDetails = ({ version }: VersionDetailsProps) => {
       
       setDownloading(false)
     } catch (error) {
-      console.error("❌ [Version Details] Error al descargar:", error)
+      console.error("[Version Details] Error al descargar:", error)
       setDownloading(false)
       // Fallback: intentar descarga directa
       const downloadUrl = getDiawiDownloadUrl(version.diawiUrl)
@@ -111,34 +108,113 @@ export const VersionDetails = ({ version }: VersionDetailsProps) => {
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Información básica */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <p className="text-sm text-muted-foreground mb-1">Fecha de publicación</p>
-              <p className="font-medium">
-                {format(releaseDate, "d 'de' MMMM 'de' yyyy, h:mm a", { locale: es })}
-              </p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground mb-1">Tipo de release</p>
-              <Badge variant="outline">{version.releaseType}</Badge>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground mb-1">Tamaño del archivo</p>
-              <p className="font-medium">{formatFileSize(version.fileSize)}</p>
-            </div>
-            {version.minAndroid && (
+          <div>
+            <h3 className="font-semibold mb-4">Información básica</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <p className="text-sm text-muted-foreground mb-1">Android mínimo</p>
-                <p className="font-medium">{version.minAndroid}</p>
+                <p className="text-sm text-muted-foreground mb-1">Fecha de publicación</p>
+                <p className="font-medium">
+                  {format(releaseDate, "d 'de' MMMM 'de' yyyy, h:mm a", { locale: es })}
+                </p>
               </div>
-            )}
-            {version.architectures && (
+              {version.uploadedDate && (
+                <div>
+                  <p className="text-sm text-muted-foreground mb-1">Fecha de subida</p>
+                  <p className="font-medium">
+                    {format(new Date(version.uploadedDate), "d 'de' MMMM 'de' yyyy, h:mm a", { locale: es })}
+                  </p>
+                </div>
+              )}
               <div>
-                <p className="text-sm text-muted-foreground mb-1">Arquitecturas</p>
-                <p className="font-medium">{version.architectures}</p>
+                <p className="text-sm text-muted-foreground mb-1">Tipo de release</p>
+                <Badge variant="outline">{version.releaseType}</Badge>
               </div>
-            )}
+              <div>
+                <p className="text-sm text-muted-foreground mb-1">Tamaño del archivo</p>
+                <p className="font-medium">{formatFileSize(version.fileSize)}</p>
+              </div>
+            </div>
           </div>
+
+          {/* Detalles de la aplicación */}
+          <div>
+            <h3 className="font-semibold mb-4">Detalles de la aplicación</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {version.packageName && (
+                <div>
+                  <p className="text-sm text-muted-foreground mb-1">Package</p>
+                  <p className="font-medium text-xs break-all">{version.packageName}</p>
+                </div>
+              )}
+              {version.minAndroid && (
+                <div>
+                  <p className="text-sm text-muted-foreground mb-1">Versión mínima de Android</p>
+                  <p className="font-medium">{version.minAndroid}</p>
+                </div>
+              )}
+              {version.targetAndroid && (
+                <div>
+                  <p className="text-sm text-muted-foreground mb-1">Versión objetivo de Android</p>
+                  <p className="font-medium">{version.targetAndroid}</p>
+                </div>
+              )}
+              {version.architectures && (
+                <div>
+                  <p className="text-sm text-muted-foreground mb-1">Arquitecturas soportadas</p>
+                  <p className="font-medium">{version.architectures}</p>
+                </div>
+              )}
+              {version.supportedScreens && (
+                <div>
+                  <p className="text-sm text-muted-foreground mb-1">Pantallas soportadas</p>
+                  <p className="font-medium">{version.supportedScreens}</p>
+                </div>
+              )}
+              {version.supportedDensities && (
+                <div>
+                  <p className="text-sm text-muted-foreground mb-1">Densidades soportadas</p>
+                  <p className="font-medium">{version.supportedDensities}</p>
+                </div>
+              )}
+              {version.debuggable !== null && (
+                <div>
+                  <p className="text-sm text-muted-foreground mb-1">Debuggable</p>
+                  <Badge variant={version.debuggable ? "warning" : "success"}>
+                    {version.debuggable ? "Sí" : "No"}
+                  </Badge>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Permisos */}
+          {version.permissions && (
+            <div>
+              <h3 className="font-semibold mb-2">Permisos</h3>
+              <div className="p-4 bg-muted rounded-md">
+                <div className="flex flex-wrap gap-2">
+                  {version.permissions.split(", ").map((permission, index) => (
+                    <Badge key={index} variant="outline" className="text-xs">
+                      {permission}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Información de firma */}
+          {version.signer && (
+            <div>
+              <h3 className="font-semibold mb-4">Información de firma</h3>
+              <div className="grid grid-cols-1 gap-4">
+                <div>
+                  <p className="text-sm text-muted-foreground mb-1">Firmante</p>
+                  <p className="font-medium text-sm">{version.signer}</p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Changelog */}
           {version.changelog && (

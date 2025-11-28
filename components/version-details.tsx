@@ -100,7 +100,7 @@ export const VersionDetails = ({ version }: VersionDetailsProps) => {
             <div>
               <CardTitle className="text-2xl">{version.appName}</CardTitle>
               <CardDescription>
-                Versión {version.version} • Build #{version.build}
+                Versión {version.version}
               </CardDescription>
             </div>
             <Badge variant={getStatusVariant()}>{status.message}</Badge>
@@ -126,7 +126,7 @@ export const VersionDetails = ({ version }: VersionDetailsProps) => {
                 </div>
               )}
               <div>
-                <p className="text-sm text-muted-foreground mb-1">Tipo de release</p>
+                <p className="text-sm text-muted-foreground mb-1">Tipo de lanzamiento</p>
                 <Badge variant="outline">{version.releaseType}</Badge>
               </div>
               <div>
@@ -135,58 +135,6 @@ export const VersionDetails = ({ version }: VersionDetailsProps) => {
               </div>
             </div>
           </div>
-
-          {/* Detalles de la aplicación */}
-          <div>
-            <h3 className="font-semibold mb-4">Detalles de la aplicación</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {version.packageName && (
-                <div>
-                  <p className="text-sm text-muted-foreground mb-1">Package</p>
-                  <p className="font-medium text-xs break-all">{version.packageName}</p>
-                </div>
-              )}
-              {version.minAndroid && (
-                <div>
-                  <p className="text-sm text-muted-foreground mb-1">Versión mínima de Android</p>
-                  <p className="font-medium">{version.minAndroid}</p>
-                </div>
-              )}
-              {version.targetAndroid && (
-                <div>
-                  <p className="text-sm text-muted-foreground mb-1">Versión objetivo de Android</p>
-                  <p className="font-medium">{version.targetAndroid}</p>
-                </div>
-              )}
-              {version.architectures && (
-                <div>
-                  <p className="text-sm text-muted-foreground mb-1">Arquitecturas soportadas</p>
-                  <p className="font-medium">{version.architectures}</p>
-                </div>
-              )}
-              {version.supportedScreens && (
-                <div>
-                  <p className="text-sm text-muted-foreground mb-1">Pantallas soportadas</p>
-                  <p className="font-medium">{version.supportedScreens}</p>
-                </div>
-              )}
-              {version.supportedDensities && (
-                <div>
-                  <p className="text-sm text-muted-foreground mb-1">Densidades soportadas</p>
-                  <p className="font-medium">{version.supportedDensities}</p>
-                </div>
-              )}
-              {version.debuggable !== null && (
-                <div>
-                  <p className="text-sm text-muted-foreground mb-1">Debuggable</p>
-                  <Badge variant={version.debuggable ? "warning" : "success"}>
-                    {version.debuggable ? "Sí" : "No"}
-                  </Badge>
-                </div>
-              )}
-            </div>
-          </div>
-
           {/* Permisos */}
           {version.permissions && (
             <div>
@@ -280,11 +228,6 @@ export const VersionDetails = ({ version }: VersionDetailsProps) => {
                     </>
                   )}
                 </Button>
-              </div>
-              <div className="p-4 bg-muted rounded-md">
-                <p className="text-xs text-muted-foreground break-all">
-                  {getDiawiDownloadUrl(version.diawiUrl)}
-                </p>
               </div>
             </div>
           </div>

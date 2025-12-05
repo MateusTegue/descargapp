@@ -37,7 +37,7 @@ DATABASE_URL_UNPOOLED=postgresql://neondb_owner:npg_MD2yOCvisL5r@ep-autumn-bush-
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
-**Nota**: Para la configuración completa con todas las variables, consulta `SETUP.md`
+**Nota**: Para la configuración completa con todas las variables, consulta `SETUP.md` o la [documentación detallada de variables de entorno](docs/ENV_VARIABLES.md)
 
 4. Configura la base de datos:
 ```bash
@@ -159,8 +159,11 @@ Ver la documentación completa en [docs/GITHUB_ACTIONS_INTEGRATION.md](docs/GITH
 1. Conecta tu repositorio a Vercel
 2. Configura las variables de entorno en Vercel:
    - `DATABASE_URL`
+   - `DATABASE_URL_UNPOOLED`
    - `NEXT_PUBLIC_APP_URL`
 3. Vercel detectará automáticamente Next.js y desplegará la aplicación
+
+Para más detalles sobre las variables de entorno, consulta [docs/ENV_VARIABLES.md](docs/ENV_VARIABLES.md)
 
 ## 📄 Licencia
 

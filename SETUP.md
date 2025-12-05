@@ -12,30 +12,32 @@ npm install
 
 Crea un archivo `.env` en la raíz del proyecto con el siguiente contenido:
 
+**Nota:** Para documentación detallada de todas las variables de entorno, consulta [docs/ENV_VARIABLES.md](docs/ENV_VARIABLES.md)
+
 ```env
 # Database Connection - PostgreSQL (Neon)
 # Recommended for most uses
-DATABASE_URL=postgresql://neondb_owner:npg_MD2yOCvisL5r@ep-autumn-bush-a467pfc6-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require
+DATABASE_URL=postgresql://*****************************************************************************************************/=require
 
 # For uses requiring a connection without pgbouncer
-DATABASE_URL_UNPOOLED=postgresql://neondb_owner:npg_MD2yOCvisL5r@ep-autumn-bush-a467pfc6.us-east-1.aws.neon.tech/neondb?sslmode=require
+DATABASE_URL_UNPOOLED=postgresql://*********************************************************************************************/=require
 
 # Parameters for constructing your own connection string
-PGHOST=ep-autumn-bush-a467pfc6-pooler.us-east-1.aws.neon.tech
-PGHOST_UNPOOLED=ep-autumn-bush-a467pfc6.us-east-1.aws.neon.tech
-PGUSER=neondb_owner
+PGHOST=*******************************************
+PGHOST_UNPOOLED=**********************************
+PGUSER=***********
 PGDATABASE=neondb
-PGPASSWORD=npg_MD2yOCvisL5r
+PGPASSWORD=***************
 
 # Parameters for Vercel Postgres Templates
-POSTGRES_URL=postgresql://neondb_owner:npg_MD2yOCvisL5r@ep-autumn-bush-a467pfc6-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require
-POSTGRES_URL_NON_POOLING=postgresql://neondb_owner:npg_MD2yOCvisL5r@ep-autumn-bush-a467pfc6.us-east-1.aws.neon.tech/neondb?sslmode=require
+POSTGRES_URL=postgresql://********************************************************************************************/=require
+POSTGRES_URL_NON_POOLING=postgresql://********************************************************************************/=require
 POSTGRES_USER=neondb_owner
 POSTGRES_HOST=ep-autumn-bush-a467pfc6-pooler.us-east-1.aws.neon.tech
 POSTGRES_PASSWORD=npg_MD2yOCvisL5r
 POSTGRES_DATABASE=neondb
-POSTGRES_URL_NO_SSL=postgresql://neondb_owner:npg_MD2yOCvisL5r@ep-autumn-bush-a467pfc6-pooler.us-east-1.aws.neon.tech/neondb
-POSTGRES_PRISMA_URL=postgresql://neondb_owner:npg_MD2yOCvisL5r@ep-autumn-bush-a467pfc6-pooler.us-east-1.aws.neon.tech/neondb?connect_timeout=15&sslmode=require
+POSTGRES_URL_NO_SSL=postgresql://*************************************************************************************/neondb
+POSTGRES_PRISMA_URL=postgresql://*************************************************************/neondb?connect_timeout=15&sslmode=require
 
 # Next.js Application
 NEXT_PUBLIC_APP_URL=http://localhost:3000

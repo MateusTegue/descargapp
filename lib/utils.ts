@@ -35,11 +35,6 @@ export const getVersionStatus = (expiresAt: Date | null | undefined): {
   return { status: "available", message: "Disponible" }
 }
 
-/**
- * Extrae el tamaño del APK desde la página de Diawi
- * @param code Código de Diawi (ej: "36Y6j7")
- * @returns Tamaño en bytes o null si no se puede obtener
- */
 export const getDiawiFileSize = async (code: string): Promise<number | null> => {
   try {
     const installPageUrl = `https://webapp.diawi.com/install/${code}`
@@ -59,16 +54,12 @@ export const getDiawiFileSize = async (code: string): Promise<number | null> => 
 
     const html = await response.text()
     
-    // Buscar el patrón: <div class="item-title">Size</div><div class="item-after">57.26 MB</div>
-    // También buscar variaciones del patrón
     let sizeMatch = html.match(/<div class="item-title">Size<\/div>\s*<div class="item-after">([^<]+)<\/div>/)
     
-    // Si no encuentra, intentar con otro patrón más flexible
     if (!sizeMatch) {
       sizeMatch = html.match(/Size[^<]*<\/div>\s*<div[^>]*class="item-after"[^>]*>([^<]+)<\/div>/i)
     }
     
-    // Si aún no encuentra, buscar cualquier patrón que contenga "MB" o "KB" cerca de "Size"
     if (!sizeMatch) {
       sizeMatch = html.match(/Size[^<]*<\/div>[^<]*<div[^>]*>([\d.]+\s*(?:MB|KB|GB))<\/div>/i)
     }
@@ -76,36 +67,26 @@ export const getDiawiFileSize = async (code: string): Promise<number | null> => 
     if (sizeMatch && sizeMatch[1]) {
       const sizeText = sizeMatch[1].trim()
       
-      // Convertir de diferentes formatos a bytes
-      let sizeInBytes: number | null = null
-      
-      // Intentar con MB
       const sizeMatchMB = sizeText.match(/([\d.]+)\s*MB/i)
       if (sizeMatchMB) {
         const sizeInMB = parseFloat(sizeMatchMB[1])
-        sizeInBytes = Math.round(sizeInMB * 1024 * 1024)
-        return sizeInBytes
+        return Math.round(sizeInMB * 1024 * 1024)
       }
       
-      // Intentar con KB
       const sizeMatchKB = sizeText.match(/([\d.]+)\s*KB/i)
       if (sizeMatchKB) {
         const sizeInKB = parseFloat(sizeMatchKB[1])
-        sizeInBytes = Math.round(sizeInKB * 1024)
-        return sizeInBytes
+        return Math.round(sizeInKB * 1024)
       }
       
-      // Intentar con GB
       const sizeMatchGB = sizeText.match(/([\d.]+)\s*GB/i)
       if (sizeMatchGB) {
         const sizeInGB = parseFloat(sizeMatchGB[1])
-        sizeInBytes = Math.round(sizeInGB * 1024 * 1024 * 1024)
-        return sizeInBytes
+        return Math.round(sizeInGB * 1024 * 1024 * 1024)
       }
       
       console.warn("[Utils] No se pudo parsear el formato del tamaño:", sizeText)
     } else {
-      // Si no se encuentra en el HTML, intentar obtener el tamaño directamente del APK
       try {
         const apkUrlMatch = html.match(/href="(https:\/\/[^"]+\.files\.diawi\.com\/app-file\/[^"]+\.apk)"/)
         if (apkUrlMatch && apkUrlMatch[1]) {
@@ -145,11 +126,6 @@ export const getDiawiFileSize = async (code: string): Promise<number | null> => 
   }
 }
 
-/**
- * Extrae los detalles del APK desde la página de Diawi
- * @param code Código de Diawi (ej: "RPGwsH")
- * @returns Objeto con los detalles del APK o null si no se puede obtener
- */
 export const getDiawiAppDetails = async (code: string): Promise<{
   packageName?: string
   minAndroid?: string
@@ -189,50 +165,38 @@ export const getDiawiAppDetails = async (code: string): Promise<{
       uploadedDate?: string
     } = {}
 
-    // Extraer Package
     const packageMatch = html.match(/<div class="item-title">Package<\/div>\s*<div class="item-after">([^<]+)<\/div>/)
     if (packageMatch && packageMatch[1]) {
       details.packageName = packageMatch[1].trim()
     }
 
-    // Extraer Minimum OS version
     const minAndroidMatch = html.match(/<div class="item-title">Minimum OS version<\/div>\s*<div class="item-after">([^<]+)<\/div>/)
     if (minAndroidMatch && minAndroidMatch[1]) {
       details.minAndroid = minAndroidMatch[1].trim()
     }
 
-    // Extraer Target OS version
     const targetAndroidMatch = html.match(/<div class="item-title">Target OS version<\/div>\s*<div class="item-after">([^<]+)<\/div>/)
     if (targetAndroidMatch && targetAndroidMatch[1]) {
       details.targetAndroid = targetAndroidMatch[1].trim()
     }
 
-    // Extraer Supported screens
     const screensMatch = html.match(/<div class="item-title">Supported screens<\/div>\s*<div class="item-after">[^<]*<span[^>]*>(\d+)<\/span>/)
     if (screensMatch && screensMatch[1]) {
       details.supportedScreens = screensMatch[1].trim()
     }
 
-    // Extraer Supported densities
     const densitiesMatch = html.match(/<div class="item-title">Supported densities<\/div>\s*<div class="item-after">[^<]*<span[^>]*>(\d+)<\/span>/)
     if (densitiesMatch && densitiesMatch[1]) {
       details.supportedDensities = densitiesMatch[1].trim()
     }
 
-    // Extraer Supported architectures
-    const archMatch = html.match(/<div class="item-title">Supported architectures<\/div>\s*<div class="item-after">([^<]+)<\/div>/)
-    // Este ya se maneja en otro lugar, pero lo incluimos aquí por consistencia
-
-    // Extraer Debuggable
     const debuggableMatch = html.match(/<div class="item-title">Debuggable<\/div>\s*<div class="item-after">([^<]+)<\/div>/)
     if (debuggableMatch && debuggableMatch[1]) {
       details.debuggable = debuggableMatch[1].trim().toLowerCase() === "yes"
     }
 
-    // Extraer Permissions (contar)
     const permissionsMatch = html.match(/<div class="item-title">Permissions<\/div>\s*<div class="item-after">[^<]*<span[^>]*>(\d+)<\/span>/)
     if (permissionsMatch && permissionsMatch[1]) {
-      // Intentar extraer la lista de permisos
       const permissionsListMatch = html.match(/<div class="item-title">Permissions<\/div>[\s\S]*?<div class="accordion-item-content">[\s\S]*?<div class="block block-strong">([\s\S]*?)<\/div>[\s\S]*?<\/div>[\s\S]*?<\/div>/)
       if (permissionsListMatch && permissionsListMatch[1]) {
         const permissionsHtml = permissionsListMatch[1]
@@ -244,13 +208,11 @@ export const getDiawiAppDetails = async (code: string): Promise<{
       }
     }
 
-    // Extraer Signer
     const signerMatch = html.match(/<div class="item-title">Signer<\/div>\s*<div class="item-after">([^<]+)<\/div>/)
     if (signerMatch && signerMatch[1]) {
       details.signer = signerMatch[1].trim()
     }
 
-    // Extraer Uploaded date
     const uploadedMatch = html.match(/<div class="item-title">Uploaded<\/div>\s*<div class="item-after">([^<]+)<\/div>/)
     if (uploadedMatch && uploadedMatch[1]) {
       details.uploadedDate = uploadedMatch[1].trim()
@@ -263,22 +225,14 @@ export const getDiawiAppDetails = async (code: string): Promise<{
   }
 }
 
-/**
- * Extrae el código de Diawi de una URL
- * @param diawiUrl URL de Diawi (puede ser webapp.diawi.com/install/CODE o diawi.com/CODE)
- * @returns Código de Diawi (ej: "36Y6j7")
- */
 export const getDiawiCode = (diawiUrl: string): string | null => {
   try {
     const url = new URL(diawiUrl)
     let code = ""
     
-    // Extraer el código de diferentes formatos de URL
     if (url.pathname.includes("/install/")) {
-      // Formato: /install/CODE
       code = url.pathname.split("/install/")[1]?.split("/")[0] || ""
     } else {
-      // Formato: /CODE
       code = url.pathname.replace(/^\//, "").split("/")[0] || ""
     }
     
@@ -289,77 +243,47 @@ export const getDiawiCode = (diawiUrl: string): string | null => {
   }
 }
 
-/**
- * Convierte una URL de Diawi a la URL de descarga directa del APK
- * @param diawiUrl URL de Diawi (puede ser webapp.diawi.com/install/CODE o diawi.com/CODE)
- * @returns URL de descarga directa (i.diawi.com/CODE)
- */
 export const getDiawiDownloadUrl = (diawiUrl: string): string => {
   try {
-    // Extraer el código de la URL de Diawi
-    // Ejemplos:
-    // - https://webapp.diawi.com/install/36Y6j7 -> 36Y6j7
-    // - https://diawi.com/36Y6j7 -> 36Y6j7
-    // - https://i.diawi.com/36Y6j7 -> 36Y6j7 (ya es directa)
-    
     const url = new URL(diawiUrl)
     let code = ""
     
-    // Si ya es una URL de descarga directa, retornarla tal cual
     if (url.hostname === "i.diawi.com") {
       return diawiUrl
     }
     
-    // Extraer el código de diferentes formatos de URL
     if (url.pathname.includes("/install/")) {
-      // Formato: /install/CODE
       code = url.pathname.split("/install/")[1]?.split("/")[0] || ""
     } else {
-      // Formato: /CODE
       code = url.pathname.replace(/^\//, "").split("/")[0] || ""
     }
     
-    // Si no se pudo extraer el código, retornar la URL original
     if (!code) {
       console.warn("No se pudo extraer el código de Diawi de la URL:", diawiUrl)
       return diawiUrl
     }
     
-    // Construir la URL de descarga directa
     return `https://i.diawi.com/${code}`
   } catch (error) {
     console.error("Error al convertir URL de Diawi:", error)
-    // Si hay un error, retornar la URL original
     return diawiUrl
   }
 }
 
-/**
- * Genera la URL de descarga directa del APK usando nuestro endpoint proxy
- * Esta URL fuerza la descarga automática del APK al acceder desde un dispositivo móvil
- * @param diawiUrl URL de Diawi (puede ser webapp.diawi.com/install/CODE o diawi.com/CODE)
- * @param baseUrl URL base del sitio (opcional, se detecta automáticamente en el cliente)
- * @returns URL de descarga directa usando nuestro endpoint (/api/download/CODE)
- */
 export const getProxyDownloadUrl = (diawiUrl: string, baseUrl?: string): string => {
   const code = getDiawiCode(diawiUrl)
   
   if (!code) {
-    // Fallback a la URL de Diawi si no se puede extraer el código
     return getDiawiDownloadUrl(diawiUrl)
   }
   
-  // Si estamos en el cliente, usar la URL relativa
   if (typeof window !== "undefined") {
     return `/api/download/${code}`
   }
   
-  // Si estamos en el servidor y se proporciona baseUrl, usarla
   if (baseUrl) {
     return `${baseUrl}/api/download/${code}`
   }
   
-  // Fallback: usar URL relativa
   return `/api/download/${code}`
 }
-

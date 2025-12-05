@@ -2,7 +2,6 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getDiawiFileSize, getDiawiDownloadUrl, getDiawiAppDetails } from "@/lib/utils"
 
-// Forzar que esta ruta sea completamente dinámica
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
 
@@ -43,7 +42,7 @@ export async function POST(request: Request) {
       version,
       build,
       diawiUrl,
-      diawi_link, // Compatibilidad con GitHub Actions que use diawi_link
+      diawi_link, 
       fileSize,
       changelog,
       releaseType = "Release",
@@ -52,7 +51,6 @@ export async function POST(request: Request) {
       expiresAt,
     } = body
 
-    // Acepta tanto diawiUrl como diawi_link para compatibilidad
     const finalDiawiUrl = diawiUrl || diawi_link
 
     if (!version || !build || !finalDiawiUrl) {

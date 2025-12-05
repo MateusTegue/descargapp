@@ -3,10 +3,6 @@ import { NextResponse } from "next/server"
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
 
-/**
- * Endpoint proxy para descargar APKs desde Diawi
- * Evita redirecciones y permite descargar directamente desde nuestro dominio
- */
 export async function GET(
   request: Request,
   { params }: { params: { code: string } }
@@ -21,7 +17,6 @@ export async function GET(
       )
     }
 
-    // Primero, obtener la página de Diawi para extraer la URL real del APK
     const installPageUrl = `https://webapp.diawi.com/install/${code}`
     
     const pageResponse = await fetch(installPageUrl, {
@@ -42,12 +37,8 @@ export async function GET(
 
     const html = await pageResponse.text()
     
-    // Extraer la URL real del APK del HTML
-    // Buscar el patrón: href="https://a3.files.diawi.com/app-file/XXXXX.apk"
     const apkUrlMatch = html.match(/href="(https:\/\/[^"]+\.files\.diawi\.com\/app-file\/[^"]+\.apk)"/)
     
-    // Extraer el tamaño del APK del HTML
-    // Buscar el patrón: <div class="item-title">Size</div><div class="item-after">57.26 MB</div>
     const sizeMatch = html.match(/<div class="item-title">Size<\/div>\s*<div class="item-after">([^<]+)<\/div>/)
     let fileSize: number | null = null
     
@@ -57,7 +48,7 @@ export async function GET(
       const sizeMatchMB = sizeText.match(/([\d.]+)\s*MB/i)
       if (sizeMatchMB) {
         const sizeInMB = parseFloat(sizeMatchMB[1])
-        fileSize = Math.round(sizeInMB * 1024 * 1024) // Convertir a bytes
+        fileSize = Math.round(sizeInMB * 1024 * 1024) 
       }
     }
     
@@ -133,8 +124,6 @@ export async function GET(
     const blob = await apkResponse.blob()
     const arrayBuffer = await blob.arrayBuffer()
 
-    // Retornar el APK con headers apropiados para forzar la descarga automática
-    // En dispositivos móviles Android, estos headers fuerzan la descarga inmediata
     return new NextResponse(arrayBuffer, {
       status: 200,
       headers: {

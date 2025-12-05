@@ -6,7 +6,6 @@ import type { Version } from "@/types/version"
 
 async function getVersion(id: string): Promise<Version | null> {
   try {
-    // Usar Prisma directamente en lugar de fetch para mayor confiabilidad
     const version = await prisma.version.findUnique({
       where: {
         id,
@@ -18,7 +17,6 @@ async function getVersion(id: string): Promise<Version | null> {
       return null
     }
 
-    // Convertir las fechas de Date a string para el tipo Version
     const versionWithStringDates: Version = {
       ...version,
       releaseDate: version.releaseDate.toISOString(),
@@ -35,7 +33,6 @@ async function getVersion(id: string): Promise<Version | null> {
   }
 }
 
-// Hacer la página completamente dinámica para evitar pre-renderizado durante el build
 export const dynamic = "force-dynamic"
 export const dynamicParams = true
 export const revalidate = 0

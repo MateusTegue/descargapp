@@ -1,10 +1,7 @@
-// Endpoint alternativo en español para compatibilidad
-// Redirige al endpoint principal /api/versions
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getDiawiFileSize, getDiawiDownloadUrl, getDiawiAppDetails } from "@/lib/utils"
 
-// Forzar que esta ruta sea completamente dinámica
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
 

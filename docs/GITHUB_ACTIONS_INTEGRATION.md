@@ -2,13 +2,13 @@
 
 Esta guía explica cómo integrar GitHub Actions con tu API de Next.js para crear versiones automáticamente.
 
-## ✅ Verificación: Usando tu API (NO Supabase)
+## Verificación: Usando tu API (NO Supabase)
 
 **IMPORTANTE**: Esta aplicación usa **Prisma con PostgreSQL (Neon)**, NO Supabase.
 
-- ✅ Endpoint: `POST /api/versiones` o `POST /api/versions`
-- ✅ Base de datos: PostgreSQL (Neon) mediante Prisma
-- ✅ ORM: Prisma Client
+- Endpoint: `POST /api/versiones` o `POST /api/versions`
+- Base de datos: PostgreSQL (Neon) mediante Prisma
+- ORM: Prisma Client
 
 ## Configuración en GitHub Actions
 

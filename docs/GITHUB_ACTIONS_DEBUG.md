@@ -1,40 +1,40 @@
 # Debug de GitHub Actions con la API
 
-## 🔍 Logs en la API
+## Logs en la API
 
 La API ahora incluye logs detallados para ayudar a debuggear las llamadas desde GitHub Actions.
 
 ### Logs que verás en la consola del servidor:
 
-1. **🔔 Inicio de la petición**
+1. **Inicio de la petición**
    - Muestra cuando se recibe una petición POST
    - Indica el endpoint (`/api/versions` o `/api/versiones`)
 
-2. **📥 Headers recibidos**
+2. **Headers recibidos**
    - Muestra todos los headers de la petición
    - Útil para verificar autenticación, content-type, etc.
 
-3. **📦 Body recibido**
+3. **Body recibido**
    - Muestra el JSON completo que se está enviando
    - Permite verificar que los datos lleguen correctamente
 
-4. **🔍 Datos extraídos**
+4. **Datos extraídos**
    - Muestra los valores específicos extraídos del body
    - Incluye: version, build, diawiUrl/diawi_link, etc.
 
-5. **🔗 URL final de Diawi**
+5. **URL final de Diawi**
    - Muestra qué URL se usará (diawiUrl o diawi_link)
 
-6. **💾 Guardando en base de datos**
+6. **Guardando en base de datos**
    - Indica cuando comienza a guardar en PostgreSQL
 
-7. **✅ Versión creada exitosamente**
+7. **Versión creada exitosamente**
    - Muestra el ID, versión y build de la versión creada
 
-8. **❌ Errores**
+8. **Errores**
    - Muestra detalles completos de cualquier error
 
-## 📋 Ejemplo de Workflow de GitHub Actions
+## Ejemplo de Workflow de GitHub Actions
 
 ```yaml
 name: Build y Publicar APK
@@ -58,8 +58,8 @@ jobs:
           BUILD=$(echo $VERSION_LINE | cut -d '+' -f2)
           echo "APK_VERSION=$VERSION" >> $GITHUB_ENV
           echo "APK_BUILD=$BUILD" >> $GITHUB_ENV
-          echo "📦 Versión extraída: $VERSION"
-          echo "🔢 Build extraído: $BUILD"
+          echo "Versión extraída: $VERSION"
+          echo "Build extraído: $BUILD"
       
       - name: Build APK
         run: |
@@ -72,11 +72,11 @@ jobs:
           # Aquí subes el APK a Diawi y obtienes el link
           DIAWI_LINK="https://diawi.com/abc123"  # Reemplaza con el link real
           echo "link=$DIAWI_LINK" >> $GITHUB_OUTPUT
-          echo "🔗 Link de Diawi: $DIAWI_LINK"
+          echo "Link de Diawi: $DIAWI_LINK"
       
       - name: Save metadata to API
         run: |
-          echo "📤 Enviando datos a la API..."
+          echo "Enviando datos a la API..."
           echo "   Versión: ${{ env.APK_VERSION }}"
           echo "   Build: ${{ env.APK_BUILD }}"
           echo "   Diawi Link: ${{ steps.diawi_poll.outputs.link }}"
@@ -91,10 +91,10 @@ jobs:
             }" \
             -v  # Flag -v para ver detalles de la petición
           
-          echo "✅ Petición enviada"
+          echo "Petición enviada"
 ```
 
-## 🔧 Ver los Logs
+## Ver los Logs
 
 ### En Desarrollo Local
 
@@ -118,7 +118,7 @@ npm run dev
 2. Filtra por función: `api/versions` o `api/versiones`
 3. Verás todos los logs en tiempo real
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### No veo logs en la consola
 
@@ -144,9 +144,8 @@ npm run dev
 - Verifica que la base de datos esté accesible
 - Verifica que Prisma esté configurado correctamente
 
-## 📝 Notas Importantes
+## Notas Importantes
 
-- Los logs incluyen emojis para facilitar la lectura
 - Todos los datos sensibles (como passwords) NO se loguean
 - Los logs se muestran en formato JSON para facilitar el debugging
 - En producción, considera reducir el nivel de logging para evitar logs excesivos

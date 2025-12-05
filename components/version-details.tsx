@@ -34,7 +34,6 @@ export const VersionDetails = ({ version }: VersionDetailsProps) => {
       const url = new URL(downloadUrl)
       const code = url.pathname.replace(/^\//, "")
       
-      // Usar nuestro endpoint proxy para descargar desde nuestro dominio
       const proxyUrl = `/api/download/${code}`
       
       // Descargar usando fetch y crear blob

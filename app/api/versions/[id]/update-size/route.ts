@@ -5,10 +5,6 @@ import { getDiawiFileSize, getDiawiDownloadUrl } from "@/lib/utils"
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
 
-/**
- * Endpoint para actualizar el tamaño del APK de una versión existente
- * Extrae el tamaño desde Diawi y lo actualiza en la base de datos
- */
 export async function POST(
   request: Request,
   { params }: { params: { id: string } }
@@ -28,7 +24,6 @@ export async function POST(
       )
     }
 
-    // Extraer el código de Diawi
     const downloadUrl = getDiawiDownloadUrl(version.diawiUrl)
     const url = new URL(downloadUrl)
     const code = url.pathname.replace(/^\//, "")

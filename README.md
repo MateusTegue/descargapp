@@ -32,8 +32,8 @@ npm install
 Crea un archivo `.env` en la raíz del proyecto. Ver `SETUP.md` para la configuración completa o usa el siguiente contenido mínimo:
 
 ```env
-DATABASE_URL=postgresql://neondb_owner:npg_MD2yOCvisL5r@ep-autumn-bush-a467pfc6-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require
-DATABASE_URL_UNPOOLED=postgresql://neondb_owner:npg_MD2yOCvisL5r@ep-autumn-bush-a467pfc6.us-east-1.aws.neon.tech/neondb?sslmode=require
+DATABASE_URL=postgresql://*******************************************************************************************/=require
+DATABASE_URL_UNPOOLED=postgresql://**********************************************************************************/=require
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
